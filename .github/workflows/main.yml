@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive' # This automatically downloads the missing loader folder
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,6 +53,6 @@ jobs:
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'celeste-wasm'
+          vercel-project-id: 'calculus-study-notes-v2'
           working-directory: ./frontend/dist
           vercel-args: '--prod'
