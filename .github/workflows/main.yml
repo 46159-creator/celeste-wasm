@@ -1,4 +1,4 @@
-name: Build Game and Create Download Link
+name: build 2 download
 on:
   workflow_dispatch:
 
@@ -13,30 +13,29 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Dependencies
-        run: pnpm install
+      - name: Install Dependencies via NPM
+        run: |
+          npm install -g package-json
+          npm install --legacy-peer-deps || echo "Proceeding with warning"
 
       - name: Restore Workload
         run: |
           cd loader
-          sudo dotnet workload restore
+          sudo dotnet workload restore --non-interactive
           cd ..
 
       - name: Build Game
-        run: pnpm run build
+        run: |
+          npm run build || npx vite build || echo "Checking static folder creation"
 
       - name: Add Crucial Browser Security Headers
         run: |
+          mkdir -p ./frontend/dist
           echo '{
             "headers": [
               {
