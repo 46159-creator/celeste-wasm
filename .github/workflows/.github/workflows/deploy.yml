@@ -1,18 +1,12 @@
-name: Build and Deploy to Vercel
+name: Build Game and Create Download Link
 on:
-  workflow_dispatch: # Allows you to trigger the build manually
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Wipe Developer Vercel Tracking
-        run: |
-          rm -rf .vercel
-          rm -rf frontend/.vercel
-          rm -rf frontend/dist/.vercel
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,11 +35,22 @@ jobs:
       - name: Build Game
         run: pnpm run build
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
+      - name: Add Crucial Browser Security Headers
+        run: |
+          echo '{
+            "headers": [
+              {
+                "source": "/(.*)",
+                "headers": [
+                  { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+                  { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+                ]
+              }
+            ]
+          }' > ./frontend/dist/vercel.json
+
+      - name: Package Game Folder for Download
+        uses: actions/upload-artifact@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'celeste-wasm-mirror' # Change this to a random name like 'math-notes'
-          working-directory: ./frontend/dist
-          vercel-args: '--prod'
+          name: finished-celeste-game
+          path: ./frontend/dist/
