@@ -1,14 +1,12 @@
 name: Build and Deploy to Vercel
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to trigger the build manually
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive' # This forces GitHub to download the missing folder!
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,13 +23,13 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Project Dependencies
+      - name: Install Dependencies
         run: pnpm install
 
       - name: Restore Workload
         run: |
           cd loader
-          dotnet workload restore --non-interactive
+          sudo dotnet workload restore
           cd ..
 
       - name: Build Game
@@ -42,6 +40,6 @@ jobs:
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'calculus-study-notes-v2' # Your innocent school link name!
+          vercel-project-id: 'celeste-wasm-mirror' # Change this to a random name like 'math-notes'
           working-directory: ./frontend/dist
           vercel-args: '--prod'
