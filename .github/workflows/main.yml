@@ -28,6 +28,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mono-devel make
 
+      - name: Fix Broken pnpm Workspace Config
+        run: |
+          echo "packages:" > pnpm-workspace.yaml
+          echo "  - '.'" >> pnpm-workspace.yaml
+          echo "  - 'frontend'" >> pnpm-workspace.yaml
+
       - name: Install Project Dependencies
         run: pnpm install
 
@@ -45,7 +51,6 @@ jobs:
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'celeste-wasm' # Change this if you want a different URL name!
+          vercel-project-id: 'celeste-wasm'
           working-directory: ./frontend/dist
           vercel-args: '--prod'
-
