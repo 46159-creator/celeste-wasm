@@ -1,4 +1,4 @@
-name: build 3 download
+name: Build Game and Create Download Link
 on:
   workflow_dispatch:
 
@@ -18,20 +18,33 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Dependencies via NPM
+      - name: Manually Inject Missing Loader Files
         run: |
-          npm install -g package-json
-          npm install --legacy-peer-deps || echo "Proceeding with warning"
+          rm -rf loader
+          git clone --recursive https://github.com loader
+
+      - name: Fix Workspace Configuration
+        run: |
+          echo "packages:" > pnpm-workspace.yaml
+          echo "  - '.'" >> pnpm-workspace.yaml
+          echo "  - 'frontend'" >> pnpm-workspace.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install
 
       - name: Restore Workload
         run: |
           cd loader
-          sudo dotnet workload restore --non-interactive
+          dotnet workload restore --non-interactive
           cd ..
 
       - name: Build Game
-        run: |
-          npm run build || npx vite build || echo "Checking static folder creation"
+        run: pnpm run build
 
       - name: Add Crucial Browser Security Headers
         run: |
