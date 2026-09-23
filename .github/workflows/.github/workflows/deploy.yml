@@ -8,6 +8,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Wipe Developer Vercel Tracking
+        run: |
+          rm -rf .vercel
+          rm -rf frontend/.vercel
+          rm -rf frontend/dist/.vercel
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
