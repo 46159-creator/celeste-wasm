@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: 'recursive' # This forces GitHub to download the missing folder!
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,34 +25,23 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install System Prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mono-devel make
-
-      - name: Force Fix Workspace Settings
-        run: |
-          echo "packages:" > pnpm-workspace.yaml
-          echo "  - '.'" >> pnpm-workspace.yaml
-          echo "  - 'frontend'" >> pnpm-workspace.yaml
-
-      - name: Install Node Modules
+      - name: Install Project Dependencies
         run: pnpm install
 
-      - name: Run Build System
+      - name: Restore Workload
         run: |
-          pnpm run build --filter=frontend... || make publish || echo "Continuing to check output files"
+          cd loader
+          dotnet workload restore --non-interactive
+          cd ..
 
-      - name: Verify Output Files Exist
-        run: |
-          mkdir -p ./frontend/dist
-          ls -la ./frontend/dist || echo "Folder empty"
+      - name: Build Game
+        run: pnpm run build
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'calculus-study-notes-v2'
+          vercel-project-id: 'calculus-study-notes-v2' # Your innocent school link name!
           working-directory: ./frontend/dist
           vercel-args: '--prod'
