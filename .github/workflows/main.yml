@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive' # This automatically downloads the missing loader folder
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,7 +26,15 @@ jobs:
       - name: Install Missing Linux Packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-devel make
+          sudo apt-get install -y mono-devel make wget unzip
+
+      - name: Download Missing Project Files
+        run: |
+          rm -rf loader
+          wget https://github.com
+          unzip master.zip
+          mv celeste-wasm-loader-master loader
+          rm master.zip
 
       - name: Fix Broken pnpm Workspace Config
         run: |
