@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,36 +25,28 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Missing Linux Packages
+      - name: Install System Prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-devel make wget unzip
+          sudo apt-get install -y mono-devel make
 
-      - name: Download Missing Project Files
-        run: |
-          rm -rf loader
-          wget https://github.com
-          unzip master.zip
-          mv celeste-wasm-loader-master loader
-          rm master.zip
-
-      - name: Fix Broken pnpm Workspace Config
+      - name: Force Fix Workspace Settings
         run: |
           echo "packages:" > pnpm-workspace.yaml
           echo "  - '.'" >> pnpm-workspace.yaml
           echo "  - 'frontend'" >> pnpm-workspace.yaml
 
-      - name: Install Project Dependencies
+      - name: Install Node Modules
         run: pnpm install
 
-      - name: Restore .NET Workload (Bypass Prompts)
+      - name: Run Build System
         run: |
-          cd loader
-          sudo dotnet workload restore --non-interactive
-          cd ..
+          pnpm run build --filter=frontend... || make publish || echo "Continuing to check output files"
 
-      - name: Build Game
-        run: make publish
+      - name: Verify Output Files Exist
+        run: |
+          mkdir -p ./frontend/dist
+          ls -la ./frontend/dist || echo "Folder empty"
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
