@@ -26,10 +26,23 @@ jobs:
       - name: Install Missing Linux Packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-devel make
+          sudo apt-get install -y mono-devel make wget unzip
+
+      - name: Download Missing Project Files
+        run: |
+          rm -rf loader
+          wget https://github.com
+          unzip master.zip
+          mv celeste-wasm-loader-master loader
+          rm master.zip
+
+      - name: Fix Broken pnpm Workspace Config
+        run: |
+          echo "packages:" > pnpm-workspace.yaml
+          echo "  - '.'" >> pnpm-workspace.yaml
+          echo "  - 'frontend'" >> pnpm-workspace.yaml
 
       - name: Install Project Dependencies
-        working-directory: ./frontend
         run: pnpm install
 
       - name: Restore .NET Workload (Bypass Prompts)
@@ -46,6 +59,6 @@ jobs:
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'celeste-wasm' # Change this if you want a different URL name!
+          vercel-project-id: 'calculus-study-notes-v2'
           working-directory: ./frontend/dist
           vercel-args: '--prod'
