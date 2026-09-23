@@ -1,6 +1,6 @@
 name: Build and Deploy to Vercel
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to trigger the build manually
 
 jobs:
   deploy:
@@ -23,42 +23,23 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Missing Linux Packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mono-devel make wget unzip
-
-      - name: Download Missing Project Files
-        run: |
-          rm -rf loader
-          wget https://github.com
-          unzip master.zip
-          mv celeste-wasm-loader-master loader
-          rm master.zip
-
-      - name: Fix Broken pnpm Workspace Config
-        run: |
-          echo "packages:" > pnpm-workspace.yaml
-          echo "  - '.'" >> pnpm-workspace.yaml
-          echo "  - 'frontend'" >> pnpm-workspace.yaml
-
-      - name: Install Project Dependencies
+      - name: Install Dependencies
         run: pnpm install
 
-      - name: Restore .NET Workload (Bypass Prompts)
+      - name: Restore Workload
         run: |
           cd loader
-          sudo dotnet workload restore --non-interactive
+          sudo dotnet workload restore
           cd ..
 
       - name: Build Game
-        run: make publish
+        run: pnpm run build
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'calculus-study-notes-v2'
+          vercel-project-id: 'celeste-wasm-mirror' # Change this to a random name like 'math-notes'
           working-directory: ./frontend/dist
           vercel-args: '--prod'
