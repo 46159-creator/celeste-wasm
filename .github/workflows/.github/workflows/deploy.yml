@@ -1,6 +1,6 @@
 name: Build and Deploy to Vercel
 on:
-  workflow_dispatch: # Allows you to trigger the build manually
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -23,23 +23,29 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install Dependencies
+      - name: Install Missing Linux Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-devel make
+
+      - name: Install Project Dependencies
+        working-directory: ./frontend
         run: pnpm install
 
-      - name: Restore Workload
+      - name: Restore .NET Workload (Bypass Prompts)
         run: |
           cd loader
-          sudo dotnet workload restore
+          sudo dotnet workload restore --non-interactive
           cd ..
 
       - name: Build Game
-        run: pnpm run build
+        run: make publish
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: 'celeste-wasm-mirror' # Change this to a random name like 'math-notes'
+          vercel-project-id: 'celeste-wasm' # Change this if you want a different URL name!
           working-directory: ./frontend/dist
           vercel-args: '--prod'
