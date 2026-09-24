@@ -1,68 +1,51 @@
-name: Build Game and Create Download Link
+name: Deploy to GitHub Pages
+
 on:
+  push:
+    branches: ["threads-v2"] # Matches your active branch seen in the images
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Manually Inject Missing Loader Files
-        run: |
-          rm -rf loader
-          git clone --recursive https://github.com loader
-
-      - name: Fix Workspace Configuration
-        run: |
-          echo "packages:" > pnpm-workspace.yaml
-          echo "  - '.'" >> pnpm-workspace.yaml
-          echo "  - 'frontend'" >> pnpm-workspace.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Restore Workload
-        run: |
-          cd loader
-          dotnet workload restore --non-interactive
-          cd ..
-
-      - name: Build Game
+      - name: Build Application
         run: pnpm run build
 
-      - name: Add Crucial Browser Security Headers
-        run: |
-          mkdir -p ./frontend/dist
-          echo '{
-            "headers": [
-              {
-                "source": "/(.*)",
-                "headers": [
-                  { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-                  { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
-                ]
-              }
-            ]
-          }' > ./frontend/dist/vercel.json
-
-      - name: Package Game Folder for Download
-        uses: actions/upload-artifact@v4
+      - name: Upload Build Artifacts
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: finished-celeste-game
-          path: ./frontend/dist/
+          path: './dist' # Vite compiled directory output
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
